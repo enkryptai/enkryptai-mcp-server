@@ -1,6 +1,6 @@
 # Enkrypt AI MCP Server
 
-The Enkrypt AI MCP Server allows you to integrate red-teaming, prompt auditing, and AI safety analysis directly into any [Model Context Protocol (MCP)]([https://docs.anthropic.com/claude/docs/mcp](https://modelcontextprotocol.io/introduction))–compatible client such as Claude Desktop or Cursor IDE.
+The Enkrypt AI MCP Server allows you to integrate red-teaming, prompt auditing, and AI safety analysis directly into any [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)–compatible client such as Claude Desktop or Cursor IDE.
 
 With this server, you can analyze prompts, detect jailbreak attempts, simulate adversarial attacks, and bring AI safety tooling directly into your assistant-driven workflows.
 
