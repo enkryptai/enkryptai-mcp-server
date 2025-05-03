@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/enkryptai-enkryptai-mcp-server-badge.png)](https://mseep.ai/app/enkryptai-enkryptai-mcp-server)
+
 # Enkrypt AI MCP Server
 
 The Enkrypt AI MCP Server allows you to integrate red-teaming, prompt auditing, and AI safety analysis directly into any [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction)–compatible client such as Claude Desktop or Cursor IDE.
