@@ -5,7 +5,7 @@ description = ""
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "enkryptai-sdk==1.0.4",
+    "enkryptai-sdk==1.0.14",
     "httpx>=0.28.1",
     "mcp[cli]>=1.6.0",
     "pandas>=2.2.3",

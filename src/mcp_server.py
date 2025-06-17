@@ -225,17 +225,50 @@ def add_model(config: Dict[str, Any]) -> Dict[str, Any]:
             Example usage:
             {
                 "model_saved_name": "example_model_name",  # The name under which the model is saved.
-                "testing_for": "LLM",  # The purpose for which the model is being tested. (Always LLM)
-                "model_name": "example_model",  # The name of the model. (e.g., gpt-4o, claude-3-5-sonnet, etc.)
-                "modality": "text",  # The type of data the model works with (e.g., text, image).
+                "model_version": "v1",  # The version of the model.
+                "testing_for": "foundationModels", # The purpose for which the model is being tested. (Always LLM)
+                "model_name":"example_model",  # The name of the model. (e.g., gpt-4o, claude-3-5-sonnet, etc.)
                 "model_config": {
-                    "model_version": "1.0",  # The version of the model.
                     "model_provider": "example_provider",  # The provider of the model. (e.g., openai, anthropic, etc.)
-                    "endpoint_url": "https://api.example.com/model",  # The endpoint URL for the model. 
-                    "apikey": "example_api_key",  # The API key to access the model.
+                    "endpoint_url":"https://api.example.com/model",  # The endpoint URL for the model. 
+                    "apikey":"example_api_key",  # The API key to access the model.
+                    "input_modalities": ["text"], # The type of data the model works with (e.g., text, image) keep it as text unless otherwise specified.
+                    "output_modalities": ["text"], # The type of data the model works with (e.g., text, image) keep it as text unless otherwise specified.
                 },
             }
     Ask the user for all the details before passing the config to the tool.
+
+    Returns:
+        A dictionary containing the response message and details of the added model.
+    """
+    # Add the model using the provided configuration
+    add_model_response = model_client.add_model(config=copy.deepcopy(config))
+    
+    # Return the response as a dictionary
+    return add_model_response.to_dict()
+
+@mcp.tool()
+def add_model_from_url(config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add a new model using the provided configuration.
+
+    Args:
+        config: A dictionary containing the url model configuration details. The structure of the ModelConfig is as follows:
+            Example usage:
+            {
+                "model_saved_name": "example_model_name",  # The name under which the model is saved.
+                "model_version": "v1",  # The version of the model.
+                "testing_for": "URL", # The purpose for which the model is being tested. (Always URL)
+                "model_name":"example_url",  # The url of the chatbot site provided by user.
+                "model_config": {
+                    "model_provider": "url",  # Always fixed to 'url'
+                    "endpoint_url":"example_url",  # Same as model_name
+                    "apikey":"none",  # The API key to access the model.
+                    "input_modalities": ["text"], # Always fixed to ['text']
+                    "output_modalities": ["text"], # Always fixed to ['text']
+                },
+            }
+    Ask the user for the url before passing the config to the tool.
 
     Returns:
         A dictionary containing the response message and details of the added model.
@@ -334,12 +367,13 @@ def remove_model(test_model_saved_name: str) -> Dict[str, Any]:
     return delete_response.to_dict()
 
 @mcp.tool()
-def add_redteam_task(model_saved_name: str, redteam_model_config: Dict[str, Any]) -> Dict[str, Any]:
+def add_redteam_task(model_saved_name: str, model_version: str, redteam_model_config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Add a redteam task using a saved model.
 
     Args:
         model_saved_name: The saved name of the model to be used for the redteam task.
+        model_version: The version of the model to be used for the redteam task.
         redteam_model_config: The configuration for the redteam task.
             Example usage:
                 sample_redteam_model_config = {
@@ -376,7 +410,7 @@ def add_redteam_task(model_saved_name: str, redteam_model_config: Dict[str, Any]
         A dictionary containing the response message and details of the added redteam task.
     """
     # Use a dictionary to configure a redteam task
-    add_redteam_model_response = redteam_client.add_task_with_saved_model(config=redteam_model_config, model_saved_name=model_saved_name)
+    add_redteam_model_response = redteam_client.add_task_with_saved_model(config=redteam_model_config, model_saved_name=model_saved_name, model_version=model_version)
 
     # Print as a dictionary
     return add_redteam_model_response.to_dict()
