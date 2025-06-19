@@ -9,7 +9,7 @@ import json
 
 ENKRYPT_API_KEY = os.getenv("ENKRYPTAI_API_KEY")
 
-ENKRYPT_BASE_URL = os.getenv("ENKRYPTAI_BASE_URL") or "https://api.dev.enkryptai.com"
+ENKRYPT_BASE_URL = os.getenv("ENKRYPTAI_BASE_URL") or "https://api.enkryptai.com"
 
 guardrails_client = GuardrailsClient(api_key=ENKRYPT_API_KEY, base_url=ENKRYPT_BASE_URL)
 
