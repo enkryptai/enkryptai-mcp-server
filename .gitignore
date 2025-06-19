@@ -6,6 +6,7 @@ dist/
 wheels/
 *.egg-info
 .DS_Store
+src/test_sdk.py
 
 # Virtual environments
 .venv

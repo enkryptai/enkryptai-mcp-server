@@ -122,7 +122,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "enkryptai-sdk", specifier = "==1.0.14" },
+    { name = "enkryptai-sdk", specifier = "==1.0.18" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.6.0" },
     { name = "pandas", specifier = ">=2.2.3" },
@@ -132,11 +132,11 @@ requires-dist = [
 
 [[package]]
 name = "enkryptai-sdk"
-version = "1.0.14"
+version = "1.0.18"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e2/4c/2d88f324d7d8037e006c5cde0e556aead6ec4a4f00f8933580a31a59268f/enkryptai_sdk-1.0.14.tar.gz", hash = "sha256:7617fe9cc3533d91a65736ea198299ed6faaf525d3cbef73e19c5a1ff8362cd0", size = 94013 }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/26/6cf84ad6dc3f9dc3635989d7b8c9251ec63f946482b383c4298642bae988/enkryptai_sdk-1.0.18.tar.gz", hash = "sha256:c5db61b85dd32f806c4cddc688a3975ec3a8664c72e413f48306eddebd44eccc", size = 96590 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f7/59/039934cff294b68e5a7911d9af3069a23f3f8431c4a54b557371c6d466ed/enkryptai_sdk-1.0.14-py3-none-any.whl", hash = "sha256:c013ab295bec3f972ef5acbc5c00380e3d81ee1a52d5e5c6cfb47dbc5c2b1a22", size = 53747 },
+    { url = "https://files.pythonhosted.org/packages/e7/c0/6e3173341744f01b848f516f95667b3acccec4e2855a17ea6ac644223768/enkryptai_sdk-1.0.18-py3-none-any.whl", hash = "sha256:7e1f369d1af2c9d80a077c3a2edec2edec01aef108a5ef6af011a7fa9c703fb2", size = 57274 },
 ]
 
 [[package]]
