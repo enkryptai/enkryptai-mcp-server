@@ -9,7 +9,7 @@ import json
 
 ENKRYPT_API_KEY = os.getenv("ENKRYPTAI_API_KEY")
 
-ENKRYPT_BASE_URL = os.getenv("ENKRYPTAI_BASE_URL") or "https://api.enkryptai.com"
+ENKRYPT_BASE_URL = os.getenv("ENKRYPTAI_BASE_URL") or "https://api.dev.enkryptai.com"
 
 guardrails_client = GuardrailsClient(api_key=ENKRYPT_API_KEY, base_url=ENKRYPT_BASE_URL)
 
@@ -226,14 +226,15 @@ def add_model(config: Dict[str, Any]) -> Dict[str, Any]:
             {
                 "model_saved_name": "example_model_name",  # The name under which the model is saved.
                 "model_version": "v1",  # The version of the model.
-                "testing_for": "foundationModels", # The purpose for which the model is being tested. (Always LLM)
+                "testing_for": "foundationModels", # The purpose for which the model is being tested. (Always foundationModels)
                 "model_name":"example_model",  # The name of the model. (e.g., gpt-4o, claude-3-5-sonnet, etc.)
                 "model_config": {
                     "model_provider": "example_provider",  # The provider of the model. (e.g., openai, anthropic, etc.)
-                    "endpoint_url":"https://api.example.com/model",  # The endpoint URL for the model. 
+                    "endpoint_url":"https://api.example.com/model",  # The endpoint URL for the model only required if provider type is custom, otherwise don't include this key. 
                     "apikey":"example_api_key",  # The API key to access the model.
-                    "input_modalities": ["text"], # The type of data the model works with (e.g., text, image) keep it as text unless otherwise specified.
-                    "output_modalities": ["text"], # The type of data the model works with (e.g., text, image) keep it as text unless otherwise specified.
+                    "system_prompt": "Some system prompt", # The system prompt for the model, only required if the user specifies, otherwise blank.
+                    "input_modalities": ["text"], # The type of data the model works with (Possible values: text, image, audio) keep it as text unless otherwise specified.
+                    "output_modalities": ["text"], # The type of data the model works with keep it as text only. If user asks for others, that modality is on our roadmap, please contact hello@enkryptai.com if you need early access to this.
                 },
             }
     Ask the user for all the details before passing the config to the tool.
@@ -246,6 +247,49 @@ def add_model(config: Dict[str, Any]) -> Dict[str, Any]:
     
     # Return the response as a dictionary
     return add_model_response.to_dict()
+
+@mcp.tool()
+def add_agent(config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add a new agent using the provided configuration.
+
+    Args:
+        config: A dictionary containing the agent configuration details. The structure of the AgentConfig is as follows:
+            Example usage:
+            {
+                "model_saved_name": "example_agent_name",  # The name under which the agent is saved.
+                "model_version": "v1",  # The version of the agent.
+                "testing_for": "agents", # The purpose for which the agent is being tested. (Always agents)
+                "model_name":"",  # Blank always
+                "model_config": {
+                    "model_provider": "custom", #Always custom
+                    "endpoint_url": "", #the endpoint url of the agent (Mandatory)
+                    "input_modalities": ["text"], #Always text
+                    "output_modalities": ["text"], #Always text
+                    "custom_headers": [{ # A list of custom headers to be sent to the agent. (Mandatory)
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }...],
+                    "custom_response_format": "", # Ask user for the response format of the agent in jq format (Mandatory)
+                    "custom_response_content_type": "json", # The content type of the agent's response (always json) (Mandatory)
+                    "custom_payload":{json that the user provides}, # Ask user for the payload to be sent to the agent (always keep placeholder for prompt as '{prompt}') (Mandatory)
+                    "tools": [{ # Ask user for a list of tools to be used by the agent. (MANDATORY)
+                            "name": "name of the tool",
+                            "description": "description of the tool"
+                            }...]
+                },
+            }
+    NOTE: DO NOT ASSUME ANY FIELDS AND ASK THE USER FOR ALL THE DETAILS BEFORE PASSING THE CONFIG TO THE TOOL.
+    Ask the user for all the mandatory details before passing the config to the tool.
+
+    Returns:
+        A dictionary containing the response message and details of the added agent.
+    """
+    # Add the agent using the provided configuration
+    add_agent_response = model_client.add_model(config=copy.deepcopy(config))
+    
+    # Return the response as a dictionary
+    return add_agent_response.to_dict()
 
 @mcp.tool()
 def add_model_from_url(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -294,18 +338,18 @@ def list_models() -> Dict[str, Any]:
     return models.to_dict()
 
 @mcp.tool()
-def get_model_details(model_saved_name: str) -> Dict[str, Any]:
+def get_model_details(model_saved_name: str, model_version: str) -> Dict[str, Any]:
     """
     Retrieve details of a specific model using its saved name.
 
     Args:
         model_saved_name: The name under which the model is saved.
-
+        model_version: The version of the model to be used for the redteam task.
     Returns:
         A dictionary containing the details of the model.
     """
     # Retrieve model details
-    model_details = model_client.get_model(model_saved_name=model_saved_name)
+    model_details = model_client.get_model(model_saved_name=model_saved_name, model_version=model_version)
 
     # Return the model details as a dictionary
     return model_details.to_dict()
@@ -379,7 +423,7 @@ def add_redteam_task(model_saved_name: str, model_version: str, redteam_model_co
                 sample_redteam_model_config = {
                 "test_name": redteam_test_name,
                 "dataset_name": "standard",
-                "redteam_test_configurations": {
+                "redteam_test_configurations": { #IMPORTANT: Before setting the redteam test config, ask the user which tests they would want to run and the sample percentage.
                     "bias_test": {
                         "sample_percentage": 2,
                         "attack_methods": {"basic": ["basic"]},
@@ -404,13 +448,226 @@ def add_redteam_task(model_saved_name: str, model_version: str, redteam_model_co
             }
             These are the only 5 tests available. Ask the user which ones to run and sample percentage for each as well.
 
-            Befor calling this tool, ensure that the model name is availble. If not, save a new model then start the redteaming task.
+            Before calling this tool, ensure that the model name is availble. If not, save a new model then start the redteaming task.
+
+            NOTE: Tests compatible with audio and image modalities are only: cbrn and harmful. Other test types are not compatible with audio and image modalities.
 
     Returns:
         A dictionary containing the response message and details of the added redteam task.
     """
     # Use a dictionary to configure a redteam task
     add_redteam_model_response = redteam_client.add_task_with_saved_model(config=redteam_model_config, model_saved_name=model_saved_name, model_version=model_version)
+
+    # Print as a dictionary
+    return add_redteam_model_response.to_dict()
+
+@mcp.tool()
+def add_custom_redteam_task(model_saved_name: str, model_version: str, custom_redteam_model_config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add a custom use-case basedredteam task using a saved model.
+    NOTE: Not compatible with audio and image modalities.
+
+    Args:
+        model_saved_name: The saved name of the model to be used for the redteam task.
+        model_version: The version of the model to be used for the redteam task.
+        custom_redteam_model_config: The configuration for the customredteam task.
+            Example usage:
+                sample_redteam_model_config = {
+                "test_name": redteam_test_name,
+                "dataset_configuration": { #Ask user for all these details, do not fill it on your own (system_description, policy_description and tools)
+                    "system_description": "", # The system description of the model for the custom use-case. (Mandatory)
+                    "policy_description": "", # The policy which the model for the custom use-case should follow. (Optional)
+                    "tools": [
+                        {
+                            "name": "web_search", # The name of the tool to be used for the custom use-case. (Optional)
+                            "description": "The tool web search is used to search the web for information related to finance." # The description of the tool to be used for the custom use-case. (Optional)
+                        }
+                    ],
+                    #The following are the default values for the custom use-case. Change them only if the user asks for a different test size.
+                    "max_prompts": 500, # The maximum number of prompts to be used for the custom use-case.
+                    "scenarios": 2, # The number of scenarios to be used for the custom use-case.
+                    "categories": 2, # The number of categories to be used for the custom use-case.
+                    "depth": 1, # The depth of the custom use-case.
+                    }
+                "redteam_test_configurations": { #IMPORTANT: Before setting the redteam test config, ask the user which tests they would want to run and the sample percentage. Note: The custom test is mandatory. other 5 are optional.
+                    "bias_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {"basic": ["basic"]},
+                    },
+                    "cbrn_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {"basic": ["basic"]},
+                    },
+                    "insecure_code_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {"basic": ["basic"]},
+                    },
+                    "toxicity_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {"basic": ["basic"]},
+                    },
+                    "harmful_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {"basic": ["basic"]},
+                    },
+                     "custom_test": {
+                        "sample_percentage": 100, # The sample percentage for the custom use-case. Keep it at 100 unless the user asks for a different sample percentage.
+                        "attack_methods": {"basic": ["basic"]},
+                    }
+                },
+            }
+
+            Befor calling this tool, ensure that the model name is availble. If not, save a new model then start the redteaming task.
+
+    Returns:
+        A dictionary containing the response message and details of the added redteam task.
+    """
+    # Use a dictionary to configure a redteam task
+    add_redteam_model_response = redteam_client.add_custom_task_with_saved_model(config=custom_redteam_model_config, model_saved_name=model_saved_name, model_version=model_version)
+
+    # Print as a dictionary
+    return add_redteam_model_response.to_dict()
+
+@mcp.tool()
+def add_agent_redteam_task(agent_saved_name: str, agent_version: str, agent_redteam_model_config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add a redteam task using a saved agent.
+
+    Args:
+        agent_saved_name: The saved name of the agent to be used for the redteam task.
+        agent_version: The version of the agent to be used for the redteam task.
+        agent_redteam_model_config: The configuration for the redteam task. ASK USER FOR ALL THESE DETAILS.
+            Example usage:
+                sample_redteam_model_config = {
+                "test_name": redteam_test_name,
+                "dataset_configuration": { #Ask user for all these details, do not fill it on your own (system_description, policy_description. Tools can be gotten from agent config otherwise ask user)
+                    "system_description": "Ask user for this", # Ask user for the system description of the agent for the custom use-case. (Mandatory exactly same as what the user has input)
+                    "policy_description": "Ask user for this", # Ask user for the policy which the agent for the custom use-case should follow. (Optional)
+                    "tools": [
+                        {
+                            "name": "ask user for this", # The name of the tool to be used for the custom use-case. (Mandatory)
+                            "description": "ask user for this" # The description of the tool to be used for the custom use-case. (Mandatory)
+                        }
+                    ],
+                    #The following are the default values for the custom use-case. Change them only if the user asks for a different test size.
+                    "max_prompts": 500, # The maximum number of prompts to be used for the custom use-case.
+                    "scenarios": 2, # The number of scenarios to be used for the custom use-case.
+                    "categories": 2, # The number of categories to be used for the custom use-case.
+                    "depth": 1, # The depth of the custom use-case.
+                    }
+                "redteam_test_configurations": { #IMPORTANT: Before setting the redteam test config, ask the user which tests they would want to run and the sample percentage
+                    "alignment_and_governance_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "input_and_content_integrity_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "infrastructure_and_integration_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "security_and_privacy_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "human_factors_and_societal_impact_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "access_control_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "physical_and_actuation_safety_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    },
+                    "reliability_and_monitoring_test": {
+                        "sample_percentage": 2,
+                        "attack_methods": {
+                        "basic": [
+                            "basic"
+                        ],
+                        "advanced": {
+                            "static": [
+                            "encoding"
+                            ]
+                        }
+                        }
+                    }
+                },
+            }
+
+    Returns:
+        A dictionary containing the response message and details of the added redteam task.
+    """
+    # Use a dictionary to configure a redteam task
+    add_redteam_model_response = redteam_client.add_custom_task_with_saved_model(config=agent_redteam_model_config, model_saved_name=agent_saved_name, model_version=agent_version)
 
     # Print as a dictionary
     return add_redteam_model_response.to_dict()
@@ -440,7 +697,7 @@ def get_redteam_task_details(test_name: str) -> Dict[str, Any]:
         test_name: The name of the redteam test.
 
     Returns:
-        A dictionary containing the details of the redteam task.
+        A dictionary containing the details of the redteam task including the system prompt of the target model used.
     """
     # Retrieve redteam task details
     redteam_task = redteam_client.get_task(test_name=test_name)
@@ -477,6 +734,7 @@ def get_redteam_task_results_summary(test_name: str) -> str:
 
         After getting the results summary, suggest the following actions to the user to mitigate the risk:
         1. Mitigate the risks by using a tailored system prompt
+        2. Create a guardrails policy to mitigate the risks
     """
     # Get redteam task results summary
     redteam_results_summary = redteam_client.get_result_summary(test_name=test_name)
@@ -501,6 +759,74 @@ def get_redteam_task_results_summary(test_name: str) -> str:
     redteam_results_summary2["mitigations_possible"] = "Safer System Prompt"
     # Return the results summary as a dictionary
     return redteam_results_summary2
+
+@mcp.tool()
+def harden_system_prompt(redteam_results_summary: Dict[str, Any], system_prompt: str) -> Dict[str, Any]:
+    """
+    Harden the system prompt by using the redteam results summary and the system prompt.
+
+    Args:
+        redteam_results_summary: A dictionary containing only the top 20 categories of the redteam results summary in terms of success percent (retrieve using get_redteam_task_results_summary tool).
+                                NOTE: If there are more than 20 items in category array, only pass the top 20 categories with the highest success percent.
+                                Format: {
+                                    "category": [
+                                        {
+                                            "Bias": {
+                                                "total": 6,
+                                                "test_type": "adv_info_test",
+                                                "success(%)": 66.67
+                                            }
+                                        }, contd.
+                                    ]
+                                }
+        system_prompt: The system prompt to be hardened (retrieve using get_redteam_task_details tool).
+
+    Returns:
+        A dictionary containing the response message and details of the hardened system prompt.
+    """
+    # Harden the system prompt using the provided configuration
+    config = {
+        "system_prompt": system_prompt,
+        "redteam_summary": redteam_results_summary
+    }
+    harden_system_prompt_response = redteam_client.risk_mitigation_system_prompt(config=config)
+
+    # Return the response as a dictionary
+    return harden_system_prompt_response.to_dict()
+
+@mcp.tool()
+def mitigation_guardrails_policy(redteam_results_summary: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Create a guardrails policy by using the redteam results summary.
+
+    Args:
+        redteam_results_summary: A dictionary containing only the top 20 categories of the redteam results summary in terms of success percent (retrieve using get_redteam_task_results_summary tool).
+                                NOTE: If there are more than 20 items in category array, only pass the top 20 categories with the highest success percent.
+                                Format: {
+                                    "category": [
+                                        {
+                                            "Bias": {
+                                                "total": 6,
+                                                "test_type": "adv_info_test",
+                                                "success(%)": 66.67
+                                            }
+                                        }, contd.
+                                    ]
+                                }
+
+    Returns:
+        A dictionary containing the response message and details of the created guardrails policy.
+
+    After getting the configuration, create the guardrails policy using the add_guardrails_policy tool.
+    """
+    config = {
+        "redteam_summary": redteam_results_summary
+    }
+    # Create the guardrails policy using the provided configuration
+    mitigation_guardrails_policy_response = redteam_client.risk_mitigation_guardrails_policy(config=config)
+    
+    # Return the response as a dictionary
+    return mitigation_guardrails_policy_response.to_dict()
 
 @mcp.tool()
 def add_deployment(deployment_config: Dict[str, Any]) -> Dict[str, Any]:
@@ -653,4 +979,6 @@ def remove_deployment(deployment_name: str) -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
+    # result = redteam_client.get_task(test_name="ResMed RedTeaming Test EU Policy")
+    # print(result.to_dict())
     mcp.run()
