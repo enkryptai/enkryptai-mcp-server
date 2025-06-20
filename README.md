@@ -4,6 +4,10 @@ The Enkrypt AI MCP Server allows you to integrate red-teaming, prompt auditing, 
 
 With this server, you can analyze prompts, detect jailbreak attempts, simulate adversarial attacks, and bring AI safety tooling directly into your assistant-driven workflows.
 
+<a href="https://glama.ai/mcp/servers/@enkryptai/enkryptai-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@enkryptai/enkryptai-mcp-server/badge" alt="Enkrypt AI Server MCP server" />
+</a>
+
 ---
 
 ## 🚀 Features
