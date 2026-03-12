@@ -27,7 +27,7 @@ Please be respectful and constructive in all interactions. We are committed to m
 2. **Clone** your fork locally:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/enkryptai-mcp-server.git
+git clone https://github.com/enkryptai/enkryptai-mcp-server.git
 cd enkryptai-mcp-server
 ```
 
